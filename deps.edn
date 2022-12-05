@@ -1,1 +1,2 @@
-{:paths ["src" "resources"]}
+{:paths ["src" "resources"]
+ :deps {medley/medley {:mvn/version "1.4.0"}}}
