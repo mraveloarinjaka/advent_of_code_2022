@@ -34,26 +34,29 @@ move 1 from 1 to 2")
         stack-from (get stacks from)
         to (dec to)
         stack-to (get stacks to)]
-  (assoc stacks
-         from (drop number stack-from)
-         to (apply conj stack-to (take number stack-from)))))
+    (clojure.core/assert (<= number (count stack-from)))
+    (-> stacks
+        (update from #(drop number %))
+        (update to #(apply conj % (take number stack-from))))))
 
 #_(execute-one-move sample-stacks [1 2 1])
-
-(apply conj '(1 2 3) (take 3 '(4 5 6)))
 
 (defn process-moves
   [stacks moves]
   (->> moves
        str/split-lines
+       (remove str/blank?)
        (map (fn parse-moves
-              [item] (let [[_ number from to] (re-matches #"move (\d+) from (\d+) to (\d+)" item)]
-                       [(Integer/parseInt number)
-                        (Integer/parseInt from)
-                        (Integer/parseInt to)])))
+              [item]
+              (let [[_ number from to] (re-matches #"move (\d+) from (\d+) to (\d+)" item)]
+                [(Integer/parseInt number)
+                 (Integer/parseInt from)
+                 (Integer/parseInt to)])))
        (reduce execute-one-move stacks)
-       vals
-       (map first)
+       ((fn extract-stack-tops
+         [unsorted-stacks]
+         (for [idx (range (count unsorted-stacks))]
+           (first (get unsorted-stacks idx)))))
        (apply str)))
 
 #_(process-moves sample-stacks sample-moves)
@@ -83,5 +86,13 @@ move 1 from 1 to 2")
 #_(->> (slurp (io/resource "day_5.txt"))
      str/split-lines
      (take 5))
+
+(defn print-stacks
+  [stacks]
+  (doseq [stack stacks]
+  (println (first stack) (apply str (second stack)))))
+
+#_(print-stacks sample-stacks)
+#_(print-stacks stacks-day-5)
 
 #_(process-moves stacks-day-5 (slurp (io/resource "day_5.txt")))
