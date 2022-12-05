@@ -42,22 +42,24 @@ move 1 from 1 to 2")
 #_(execute-one-move sample-stacks [1 2 1])
 
 (defn process-moves
-  [stacks moves]
-  (->> moves
-       str/split-lines
-       (remove str/blank?)
-       (map (fn parse-moves
-              [item]
-              (let [[_ number from to] (re-matches #"move (\d+) from (\d+) to (\d+)" item)]
-                [(Integer/parseInt number)
-                 (Integer/parseInt from)
-                 (Integer/parseInt to)])))
-       (reduce execute-one-move stacks)
-       ((fn extract-stack-tops
-         [unsorted-stacks]
-         (for [idx (range (count unsorted-stacks))]
-           (first (get unsorted-stacks idx)))))
-       (apply str)))
+  ([stacks moves execute-one-move-fn]
+   (->> moves
+        str/split-lines
+        (remove str/blank?)
+        (map (fn parse-moves
+               [item]
+               (let [[_ number from to] (re-matches #"move (\d+) from (\d+) to (\d+)" item)]
+                 [(Integer/parseInt number)
+                  (Integer/parseInt from)
+                  (Integer/parseInt to)])))
+        (reduce execute-one-move-fn stacks)
+        ((fn extract-stack-tops
+           [unsorted-stacks]
+           (for [idx (range (count unsorted-stacks))]
+             (first (get unsorted-stacks idx)))))
+        (apply str)))
+  ([stacks moves]
+   (process-moves stacks moves execute-one-move)))
 
 #_(process-moves sample-stacks sample-moves)
 
@@ -96,3 +98,16 @@ move 1 from 1 to 2")
 #_(print-stacks stacks-day-5)
 
 #_(process-moves stacks-day-5 (slurp (io/resource "day_5.txt")))
+
+(defn execute-one-move-9001
+  [stacks [number from to]]
+  (let [from (dec from)
+        stack-from (get stacks from)
+        to (dec to)
+        stack-to (get stacks to)]
+    (-> stacks
+        (update from #(drop number %))
+        (update to #(concat (take number stack-from) %)))))
+
+#_(process-moves sample-stacks sample-moves execute-one-move-9001)
+#_(process-moves stacks-day-5 (slurp (io/resource "day_5.txt")) execute-one-move-9001)
