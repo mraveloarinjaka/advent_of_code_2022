@@ -80,9 +80,8 @@ move 1 from 1 to 2")
              "ZCVFJRQW"
              "HLMPR"]))
 
-(->> (slurp (io/resource "day_5.txt"))
+#_(->> (slurp (io/resource "day_5.txt"))
      str/split-lines
      (take 5))
 
-#_(process-moves stacks-day-5 (slurp (io/resource "day_5.txt"))) ; "TPGMBSWRN"
-; "TPGMBSWRN"
+#_(process-moves stacks-day-5 (slurp (io/resource "day_5.txt")))

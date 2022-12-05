@@ -1,2 +1,2 @@
 {:paths ["src" "resources"]
- :deps {medley/medley {:mvn/version "1.4.0"}}}
+ :deps {io.github.weavejester/medley {:git/sha "d1e00337cf6c0843fb6547aadf9ad78d981bfae5"}}}
