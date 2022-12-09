@@ -92,7 +92,7 @@ move 1 from 1 to 2")
 (defn print-stacks
   [stacks]
   (doseq [stack stacks]
-  (println (first stack) (apply str (second stack)))))
+    (println (first stack) (apply str (second stack)))))
 
 #_(print-stacks sample-stacks)
 #_(print-stacks stacks-day-5)
