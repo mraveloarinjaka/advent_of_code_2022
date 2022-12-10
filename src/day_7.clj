@@ -109,7 +109,7 @@ $ ls
                  (parse ctx line))
                initial-state)))
 
-(parse-output sample)
+#_(parse-output sample)
 
 (defn size
   [adjacency-list cpath {:keys [dirs files]}]
@@ -158,14 +158,33 @@ $ ls
                 new-unknowns (seq (select-keys adjacency-list cpaths))]
             (recur new-size (concat new-unknowns remaining-unknowns) (dec max-iter))))))))
 
-(->> (compute-sizes sample size-iterative)
+#_(->> (compute-sizes sample size-iterative)
      (filter (fn [[_ dir-size]] (< dir-size 100000)))
      (map second)
      (reduce + 0))
 
-(->> (compute-sizes (slurp (io/resource "day_7.txt")) size-iterative)
+#_(->> (compute-sizes (slurp (io/resource "day_7.txt")) size-iterative)
      (filter (fn [[_ dir-size]] (< dir-size 100000)))
      (map second)
      (reduce + 0))
 
+(def TOTAL-SPACE 70000000)
+(def MIN-UNUSED-SPACE 30000000)
 
+(defn to-delete
+  [input]
+  (let [fs (compute-sizes input size-iterative)
+        used-space (get fs ROOT-PATH)]
+    (->> fs
+         (mcore/map-vals (fn [dir-size] {:dir-size dir-size}))
+         (mcore/map-vals (fn [{:keys [dir-size] :as dir-info}]
+                           (assoc dir-info :new-used-space (- used-space dir-size))))
+         (mcore/map-vals (fn [{:keys [new-used-space] :as dir-info}]
+                           (assoc dir-info :new-unused-space (- TOTAL-SPACE new-used-space))))
+         (filter (fn [[_ {:keys [new-unused-space] :as dir-info}]]
+                   (<= MIN-UNUSED-SPACE new-unused-space)))
+         (apply min-key (fn [[_ {:keys [new-unused-space]}]]
+                          new-unused-space)))))
+
+(to-delete sample)
+(to-delete (slurp (io/resource "day_7.txt")))
