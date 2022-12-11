@@ -38,26 +38,25 @@
 (parse-input sample)
 #_(parse-input (slurp (io/resource "day_8.txt")))
 
-
 (defn ->to-top
   [[x y] _]
-  (for [yi (range y)]
-    [x yi]))
+  (vec (for [yi (range 1 (inc y))]
+    [x (- y yi)])))
 
 (defn ->to-bottom
   [[x y] {:keys [height]}]
-  (for [yi (range (inc y) height)]
-    [x yi]))
+  (vec (for [yi (range (inc y) height)]
+    [x yi])))
 
 (defn ->to-left
   [[x y] _]
-  (for [xi (range x)]
-    [xi y]))
+  (vec (for [xi (range 1 (inc x))]
+    [(- x xi) y])))
 
 (defn ->to-right
   [[x y] {:keys [width]}]
-  (for [xi (range (inc x) width)]
-    [xi y]))
+  (vec (for [xi (range (inc x) width)]
+    [xi y])))
 
 (defn visible?
   [[x y] {:keys [grid] :as input}]
@@ -65,7 +64,7 @@
         potential-blockers-all-directions ((juxt ->to-top ->to-bottom ->to-left ->to-right) [x y] input)]
     (seq (remove (fn has-blocker?
                    [potential-blockers]
-                   (some (fn blocks?
+                   (some (fn taller?
                            [[xb yb]]
                            (let [heightb (get grid [xb yb])]
                              (<= current-height heightb)))
@@ -94,3 +93,35 @@
 #_(let [input (parse-input (slurp (io/resource "day_8.txt")))]
   (+ (count-border-trees input)
      (count-visible-inner-trees input)))
+
+(defn scenic-score
+  [[x y] {:keys [grid] :as input}]
+  (let [current-height (get grid [x y])
+        trees-in-all-directions ((juxt ->to-top ->to-bottom ->to-left ->to-right) [x y] input)]
+    (->> trees-in-all-directions
+         (map (fn retrieve-visible-trees
+                [trees-in-one-direction]
+                (mcore/take-upto (fn taller?
+                                   [[xb yb]]
+                                   (let [heightb (get grid [xb yb])]
+                                     (<= current-height heightb)))
+                                 trees-in-one-direction)))
+         (map count) ; viewing-distance
+         (reduce * 1))))
+
+(let [input (parse-input sample)]
+  (scenic-score [2 3] input))
+
+(let [{:keys [grid] :as input} (parse-input sample)]
+  (->> grid
+       (mcore/map-kv-vals (fn [xy _]
+                       (scenic-score xy input)))
+       (apply max-key second)))
+
+#_(let [{:keys [grid] :as input} (parse-input (slurp (io/resource "day_8.txt")))]
+  (->> grid
+       (mcore/map-kv-vals (fn [xy _]
+                       (scenic-score xy input)))
+       (apply max-key second)))
+
+
