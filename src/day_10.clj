@@ -70,16 +70,25 @@ addx -5")
         (assoc :X-values (vec remaining-X-values))
         (update :cycle inc))))
 
+(defn execute-instruction
+  [context instruction]
+  (if instruction
+    (execute context instruction)
+    context))
+
+(def INITIAL-STATE {:X 1 :X-values [] :cycle 1 :signal-strength []})
+
 (defn process-instructions
   [instructions]
-  (loop [context {:X 1 :X-values [] :cycle 1 :signal-strength []}
+  (loop [context INITIAL-STATE
          [instruction & remaining-instructions] instructions]
     (let [new-context (-> context
-                          (execute instruction)
+                          (execute-instruction instruction)
                           update-on-tick)]
-      (if (seq remaining-instructions)
+      (if (or (seq remaining-instructions)
+              (seq (get new-context :X-values)))
         (recur new-context remaining-instructions)
-        (reduce (fn [ctx _] (update-on-tick ctx)) new-context (get new-context :X-values))))))
+        new-context))))
 
 (process-instructions (->instructions SAMPLE))
 #_(process-instructions (->instructions LARGER-SAMPLE))
@@ -89,9 +98,29 @@ addx -5")
   (->> (process-instructions (->instructions input))
        :signal-strength
        (drop 19)
-       (partition 40 40 [])
-       (map first)
+       (take-nth 40)
        (reduce +)))
 
 (compute-signal-strength LARGER-SAMPLE)
 #_(compute-signal-strength (slurp (io/resource "day_10.txt")))
+
+(defn process-instructions-lazy
+  ([instructions]
+   (process-instructions-lazy instructions INITIAL-STATE))
+  ([instructions context]
+   (let [[instruction & remaining-instructions] instructions
+         new-context (-> context
+                         (execute-instruction instruction)
+                         update-on-tick)]
+     (lazy-seq (cons new-context (process-instructions-lazy remaining-instructions new-context))))))
+
+#_(->> (process-instructions-lazy (->instructions (slurp (io/resource "day_10.txt"))))
+       (map :signal-strength)
+       (take 221)
+       last 
+       (drop 19)
+       (take-nth 40)
+       (reduce +))
+
+
+
