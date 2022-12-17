@@ -106,7 +106,7 @@ addx -5")
 
 (defn process-instructions-lazy
   ([instructions]
-   (process-instructions-lazy instructions INITIAL-STATE))
+   (cons INITIAL-STATE (process-instructions-lazy instructions INITIAL-STATE)))
   ([instructions context]
    (let [[instruction & remaining-instructions] instructions
          new-context (-> context
@@ -122,5 +122,36 @@ addx -5")
        (take-nth 40)
        (reduce +))
 
+(def WIDTH 40)
+
+(def NB-OF-PIXELS (* WIDTH 6))
+
+(defn ->pixel
+  [width pixel]
+  (mod pixel width))
+
+(defn ->sprite
+  [X]
+  #{(dec X) X (inc X)})
+
+(defn lit?
+  [X pixel]
+  (some? ((->sprite X) pixel)))
+
+(def PIXEL-STATES {true "#" false "."})
+
+(defn render
+  [input]
+  (->> (interleave (map (partial ->pixel WIDTH) (range NB-OF-PIXELS))
+                   (map :X (process-instructions-lazy (->instructions input))))
+       (partition 2)
+       (map #(apply lit? %))
+       (map PIXEL-STATES)
+       (partition WIDTH)
+       (map #(apply str %))
+       (interleave (repeat "\n"))))
+
+(apply println (render LARGER-SAMPLE))
+(apply println (render (slurp (io/resource "day_10.txt"))))
 
 
